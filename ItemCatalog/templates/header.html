@@ -1,0 +1,40 @@
+<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+</head>
+<style>
+
+.button{
+ border: 1px solid lightblue;
+ color: lightblue;
+ background: transparent;
+ float: right;
+}
+
+#header_div{
+ padding: 5px;
+ margin: 10;
+ background: steelblue;
+
+}
+
+h3{
+color: lightblue;
+}
+
+</style>
+
+<div style="width: 100%; background: steelblue;margin:5px; padding:5px">
+  <h2 style="float: left; width: auto; color: lightblue; font-size: 18px;margin:5px; padding:5px"><a href="{{url_for('catalog')}}" style="color:lightblue">
+	  Category App</a></h2>
+		<button style="float: right; width: auto; color: lightblue; border: 1px solid lightblue;margin:3px background: steelblue">
+			{%if 'username' not in session %}
+			<a href="{{url_for('showLogin')}}">Click Here to Login </a>
+			{% else %}
+			<a href="{{url_for('gdisconnect')}}"> Logout </a>
+			{% endif %}
+		</button>
+		{%if 'username' in session %}
+		<h4  align="center" style="color:white"> {{session['username']}}</h4>
+		{% endif %}
+  <div style="clear: left;"></div>
+</div>
