@@ -47,11 +47,11 @@
   $('#signinButton').click(function() {
     
         
-    auth2.grantOfflineAccess({'redirect_uri': 'postmessage'}).then(signInCallback);
+    auth2.grantOfflineAccess().then(signInCallback);
 
   });
-</script>
-</div>
+</script> 
+<!-- </div> -->
 
 <!--END NEW GOOGLE BUTTON -->
 
@@ -103,4 +103,5 @@ function signInCallback(json) {
 
   </body>
 
+</html>
 

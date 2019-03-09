@@ -7,7 +7,10 @@ This application display a list of items within a variety of categories, as well
 -   User can login using `Auth2.0` using Google API and can create/edit/delete the items that they have created themselves.
 -   It follows the PEP8 style guide
 
-Python Version - `2.7`
+NOTE :- 
+Python Required Version - `2.7`
+Please enable javascript in your browser.
+
 
 ## prerequisite(s)
 To execute this project you need to setup few things which are explained below in details.

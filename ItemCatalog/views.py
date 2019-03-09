@@ -276,10 +276,10 @@ def edit_item(item_name):
 
     item = session.query(Item).filter_by(title=item_name).first()
     if not item.user_id or login_session['user_id'] != item.user_id:
-        return '''<script>function myFunction()
-        {alert('You are not authorized to edit this item. Please create
-         your own Item in order to edit items.');}</script>
-         <body onload='myFunction()'>'''
+        return "<script>function myFunction(){alert('You \
+are not authorized to edit this item. Please create your own \
+Item in order to edit items.');window.location='http://localhost:8000'}\
+</script><body onload='myFunction()'>"
 
     if request.method == 'POST':
         # Check for title
@@ -333,10 +333,10 @@ def delete_item(item_name):
 
     item = session.query(Item).filter_by(title=item_name).first()
     if not item.user_id or login_session['user_id'] != item.user_id:
-        return '''<script>function myFunction()
-        {alert('You are not authorized to delete this item. Please create
-        your own Item in order to delete items.');}
-        </script><body onload='myFunction()'>'''
+        return "<script>function myFunction(){alert('You \
+are not authorized to delete this item. Please create your own \
+Item in order to delete items.');window.location='http://localhost:8000'}\
+</script><body onload='myFunction()'>"
 
     if request.method == 'POST':
         session.delete(item)
