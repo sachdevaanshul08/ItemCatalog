@@ -20,12 +20,16 @@ from sqlalchemy.orm import sessionmaker
 # Database tables (Classes)
 from models import Base, User, Category, Item
 import requests
+# Logging
+import logging
 
 import random
 import string
 
 # Create the Flask instance with name of the running application as an argument
 app = Flask(__name__)
+
+logging.basicConfig(filename='usage.log', level=logging.DEBUG)
 
 # Client ID issued by google to use in Oauth protocal
 # to access the google apis server
@@ -41,6 +45,10 @@ session = DBSession()
 
 @app.route('/login')
 def showLogin():
+    """
+        Redirect the user on
+        login page
+    """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in range(32))
     login_session['state'] = state
@@ -49,7 +57,10 @@ def showLogin():
 
 @app.route('/oauth/<provider>', methods=['POST'])
 def gconnect(provider):
-
+    """
+        Exchange the one time auth code with
+        access_token
+    """
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -58,7 +69,7 @@ def gconnect(provider):
 
     # STEP 1 - Parse the auth code
     auth_code = request.data.decode('utf-8')
-    print "Step 1 - Complete, received auth code %s" % auth_code
+    logging.info('Step 1 - Complete, received auth code %s' % auth_code)
     if provider == 'google':
         # STEP 2 - Exchange for a token
         try:
@@ -108,7 +119,8 @@ def gconnect(provider):
                 'Current user is already connected.'), 200)
             response.headers['Content-Type'] = 'application/json'
             return response
-        print "Step 2 Complete! Access Token : %s " % credentials.access_token
+        logging.info('Step 2 Complete! Access Token : %s '
+                     % credentials.access_token)
 
         # Store the access token in the session for later use.
         login_session['access_token'] = access_token
@@ -151,6 +163,9 @@ def gconnect(provider):
 
 
 def createUser(login_session):
+    """
+        Create User
+    """
     newUser = User(name=login_session['username'], email=login_session[
         'email'], picture=login_session['picture'])
     session.add(newUser)
@@ -160,11 +175,17 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    """
+        Return the exising user (if any)
+    """
     user = session.query(User).filter_by(id=user_id).one()
     return user
 
 
 def getUserID(email):
+    """
+        Return the user_id on the basis of email
+    """
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -176,6 +197,9 @@ def getUserID(email):
 # and reset their login_session by removing all the cached data
 @app.route('/gdisconnect')
 def gdisconnect():
+    """
+        Disconnect from 3 party authenticator i.e. google in this app
+    """
     # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
@@ -219,10 +243,42 @@ def gdisconnect():
 # Catalog json
 @app.route('/catalog.json')
 def category_json():
+    """
+        return all the categories
+        along with its items
+    """
     category = session.query(Category).all()
     if not category:
         return jsonify({'message': 'no data found'})
     return jsonify(Category=[cat.serialize for cat in category])
+
+
+# Menu.json
+@app.route('/<int:cat_id>/item/JSON')
+def item_json(cat_id):
+    """
+        return item(s) specific category
+    """
+    item = session.query(Item).filter_by(category_id=cat_id).all()
+    if not item:
+        return jsonify({'message': 'no data found'})
+    return jsonify(Item=[it.serialize for it in item])
+
+
+# Arbitrary Menu.json
+@app.route('/<int:cat_id>/item/<int:item_id>/JSON')
+def arbitraryitem_json(cat_id, item_id):
+    """
+        return speicific item under specific category
+    """
+    category = session.query(Category).filter_by(id=cat_id).first()
+    if not category:
+        return jsonify({'message': 'no category found with id %d' % cat_id})
+    item = session.query(Item).filter_by(category_id=cat_id)\
+                              .filter_by(id=item_id).first()
+    if not item:
+        return jsonify({'message': 'no item found'})
+    return jsonify(Item=item.serialize)
 
 
 # home page
@@ -230,6 +286,9 @@ def category_json():
 @app.route('/home')
 @app.route('/catalog')
 def catalog():
+    """
+        Home page of the application
+    """
     category = session.query(Category).all()
     item = session.query(Item).order_by(-Item.id).limit(len(category)).all()
     itemDetailsList = []
@@ -240,7 +299,7 @@ def catalog():
                 # it.title = it.title + " (" + cat.name + ")"
                 itemDetailsList.append(ItemDetails(it.title, cat.name))
                 # itemName.insert(iLoop, it.title + " (" + cat.name + ")")
-
+    logging.info("fghj")
     return render_template('main.html',
                            Category=category,
                            Item=itemDetailsList, type=None)
@@ -249,6 +308,10 @@ def catalog():
 # Fetch the items on the basis of category
 @app.route('/catalog/<string:category_name>/items')
 def item(category_name):
+    """
+        This will display Items under specific category
+        on screen
+    """
     category = session.query(Category).filter_by(name=category_name).first()
     item = session.query(Item).filter_by(
         category_id=category.id).order_by(Item.title).all()
@@ -262,6 +325,9 @@ def item(category_name):
 # Fetch the item desciption on the basis of selected category and item
 @app.route('/catalog/<string:category_name>/<string:item_name>')
 def item_description(category_name, item_name):
+    """
+        Display the item description
+    """
     if "(" in item_name:
         item_name = item_name.split(' (')[0]
     item = session.query(Item).filter_by(title=item_name).first()
@@ -271,6 +337,9 @@ def item_description(category_name, item_name):
 # Edit Item
 @app.route('/catalog/<string:item_name>/edit', methods=['GET', 'POST'])
 def edit_item(item_name):
+    """
+        Edit Item
+    """
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -304,6 +373,9 @@ Item in order to edit items.');window.location='http://localhost:8000'}\
 
 @app.route('/catalog/add', methods=['GET', 'POST'])
 def add_item():
+    """
+        Add Item
+    """
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -327,7 +399,9 @@ def add_item():
 # Delete Item
 @app.route('/catalog/<string:item_name>/delete', methods=['GET', 'POST'])
 def delete_item(item_name):
-
+    """
+        Delete Item
+    """
     if 'username' not in login_session:
         return redirect('/login')
 
