@@ -299,7 +299,6 @@ def catalog():
                 # it.title = it.title + " (" + cat.name + ")"
                 itemDetailsList.append(ItemDetails(it.title, cat.name))
                 # itemName.insert(iLoop, it.title + " (" + cat.name + ")")
-    logging.info("fghj")
     return render_template('main.html',
                            Category=category,
                            Item=itemDetailsList, type=None)
